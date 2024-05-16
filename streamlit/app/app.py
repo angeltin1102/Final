@@ -1,63 +1,58 @@
-import inspect
-import textwrap
-
 import streamlit as st
+import pandas as pd
+import os
+import numpy as np
 
-from demo_echarts import ST_DEMOS
-from demo_pyecharts import ST_PY_DEMOS
-
+def loaddata(filepath):
+    """
+    Load data from a CSV file.
+    """
+    if os.path.exists(filepath):
+        df = pd.read_csv(filepath)
+        return df
+    else:
+        st.error("File not found.")
+        return None
 
 def main():
-    st.title("Streamlit ECharts Demo")
+    # Set page title
+    st.title("Line Graph from CSV")
 
-    with st.sidebar:
-        st.header("Configuration")
-        api_options = ("echarts", "pyecharts")
-        selected_api = st.selectbox(
-            label="Choose your preferred API:",
-            options=api_options,
-        )
+    # Load data
+    data_id = "CA.csv"
+    file_path = "/storage/cleanse/" + data_id
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    df = loaddata(file_path)
 
-        page_options = (
-            list(ST_PY_DEMOS.keys())
-            if selected_api == "pyecharts"
-            else list(ST_DEMOS.keys())
-        )
-        selected_page = st.selectbox(
-            label="Choose an example",
-            options=page_options,
-        )
-        demo, url = (
-            ST_DEMOS[selected_page]
-            if selected_api == "echarts"
-            else ST_PY_DEMOS[selected_page]
-        )
+    # Display data
+    if df is not None:
+        st.write("### Data from CSV file")
+        st.write(df)
 
-        if selected_api == "echarts":
-            st.caption(
-                """ECharts demos are extracted from https://echarts.apache.org/examples/en/index.html, 
-            by copying/formattting the 'option' json object into st_echarts.
-            Definitely check the echarts example page, convert the JSON specs to Python Dicts and you should get a nice viz."""
-            )
-        if selected_api == "pyecharts":
-            st.caption(
-                """Pyecharts demos are extracted from https://github.com/pyecharts/pyecharts-gallery,
-            by copying the pyecharts object into st_pyecharts. 
-            Pyecharts is still using ECharts 4 underneath, which is why the theming between st_echarts and st_pyecharts is different."""
-            )
+        # Plot line graph
+        st.write("### Line Graph")
+        st.line_chart(df)
 
-    demo()
+        # Display summary statistics
+        st.write("### Summary Statistics")
+        st.write(df.describe())
 
-    sourcelines, _ = inspect.getsourcelines(demo)
-    with st.expander("Source Code"):
-        st.code(textwrap.dedent("".join(sourcelines[1:])))
-    st.markdown(f"Credit: {url}")
+        # # Display missing values
+        # st.write("### Missing Values")
+        # missing_values = df.isnull().sum()
+        # st.write(missing_values)
 
+        # Display correlation matrix
+        st.write("### Correlation Matrix")
+        st.write(df.corr())
+
+        # # Display scatter plot
+        # st.write("### Scatter Plot")
+        # st.write("Select columns to plot:")
+        # x_column = st.selectbox("X-axis", df.columns)
+        # y_column = st.selectbox("Y-axis", df.columns)
+        # st.write(f"Selected columns: {x_column}, {y_column}")
+        # st.write(df.plot.scatter(x=x_column, y=y_column))
 
 if __name__ == "__main__":
-    st.set_page_config(
-        page_title="US State Rent Prediction", page_icon=":chart_with_upwards_trend:"
-    )
     main()
-
-    
